@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -36,14 +36,26 @@
                 color: #e0e0e0 !important;
             }
 
-            /* Force dark backgrounds on common white elements */
-            div, section, article, aside, main, header, nav {
-                background-color: inherit !important;
+            /* Aggressive universal dark mode application */
+            * {
+                border-color: #404040 !important;
+            }
+
+            /* Force dark backgrounds on all common elements */
+            div, section, article, aside, main, header, nav, footer,
+            span[style*="background"], div[style*="background"] {
+                background-color: #242424 !important;
             }
 
             /* Top level containers */
             #wrap, #maincontent, .container, .container-fluid {
                 background-color: #1a1a1a !important;
+                color: #e0e0e0 !important;
+            }
+
+            /* All row and column layouts */
+            .row, [class*="col-"], .columns, .column {
+                background-color: #242424 !important;
                 color: #e0e0e0 !important;
             }
 
@@ -316,13 +328,33 @@
             }
 
             /* Right column on details pages */
-            #right-column {
+            #right-column, #left-column {
                 background-color: #1a1a1a !important;
             }
 
-            /* Prevent bright white flashes */
-            * {
-                background-color: inherit;
+            /* Override any white or light backgrounds */
+            [style*="background: white"],
+            [style*="background: #fff"],
+            [style*="background-color: white"],
+            [style*="background-color: #fff"],
+            [style*="background-color: #ffffff"],
+            [style*="background-color: rgb(255, 255, 255)"],
+            [class*="bg-white"],
+            [class*="bg-light"],
+            .bg-white, .bg-light {
+                background-color: #242424 !important;
+            }
+
+            /* Override light text on now-dark backgrounds */
+            [style*="color: white"],
+            [style*="color: #fff"],
+            [class*="text-white"] {
+                color: #e0e0e0 !important;
+            }
+
+            /* Ensure all text is readable */
+            p, span, div, td, th, li, a, label, legend {
+                color: inherit !important;
             }
         }
     `);
