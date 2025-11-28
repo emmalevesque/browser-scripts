@@ -25,6 +25,10 @@ code  { background-color: #200; }
   --ia-theme-text-color: white;
 }
 
+#right-column {
+  background-color: var(--ia-theme-secondary-background-color);
+}
+
 /* item details page */
 body.ia-module.tiles .item-ia .item-ttl .ttl,
 body.ia-module .ikind.stealth.in,
