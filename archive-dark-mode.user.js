@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.4
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -425,7 +425,8 @@
 
             // Specifically target #results and related containers
             if (element.id === 'results' || element.id === 'results-container' ||
-                element.className.includes('results')) {
+                element.className.includes('results') ||
+                element.className.includes('container')) {
                 targetColor = '#242424';
             }
 
