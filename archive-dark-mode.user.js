@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.5
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -59,11 +59,27 @@
                 color: #e0e0e0 !important;
             }
 
-            /* Header */
-            #navwrap1, #nav-tophat, .navbar, #navwrap2 {
+            /* Header - force override inline styles */
+            #navwrap1, #nav-tophat, .navbar, #navwrap2,
+            header, [role="banner"],
+            header[style*="background"],
+            div[style*="background"][class*="nav"],
+            div[style*="background"][id*="nav"] {
                 background-color: #2d2d2d !important;
+                background: #2d2d2d !important;
                 border-color: #404040 !important;
                 color: #e0e0e0 !important;
+            }
+
+            /* Specifically target any header element with white background */
+            header[style*="#fff"],
+            header[style*="white"],
+            [id*="nav"][style*="#fff"],
+            [id*="nav"][style*="white"],
+            [class*="nav"][style*="#fff"],
+            [class*="nav"][style*="white"] {
+                background-color: #2d2d2d !important;
+                background: #2d2d2d !important;
             }
 
             /* Links */
@@ -327,22 +343,35 @@
                 color: #e0e0e0 !important;
             }
 
-            /* Right column on details pages */
-            #right-column, #left-column {
+            /* Right column on details pages - override inline styles */
+            #right-column, #left-column,
+            #right-column[style*="background"],
+            #left-column[style*="background"] {
                 background-color: #1a1a1a !important;
+                background: #1a1a1a !important;
             }
 
-            /* Override any white or light backgrounds */
+            /* Override any white or light backgrounds - comprehensive */
             [style*="background: white"],
             [style*="background: #fff"],
+            [style*="background:#fff"],
+            [style*="background: #FFF"],
+            [style*="background:#FFF"],
             [style*="background-color: white"],
             [style*="background-color: #fff"],
+            [style*="background-color:#fff"],
+            [style*="background-color: #FFF"],
+            [style*="background-color:#FFF"],
             [style*="background-color: #ffffff"],
+            [style*="background-color:#ffffff"],
             [style*="background-color: rgb(255, 255, 255)"],
+            [style*="background-color:rgb(255, 255, 255)"],
+            [style*="background-color: rgb(255,255,255)"],
             [class*="bg-white"],
             [class*="bg-light"],
             .bg-white, .bg-light {
                 background-color: #242424 !important;
+                background: #242424 !important;
             }
 
             /* Override light text on now-dark backgrounds */
