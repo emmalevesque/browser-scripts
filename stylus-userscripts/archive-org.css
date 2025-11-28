@@ -14,6 +14,17 @@ html, body { color:white; }
 input, textarea, .form-control  { background-color: black; color: white; }
 code  { background-color: #200; }
 
+:root {
+  --ia-theme-secondary-background-color: #222;
+  --ia-theme-primary-background-color: #222;
+  --ia-theme-primary-text-color: white;
+  --ia-theme-secondary-text-color: #bbb;
+  --ia-theme-link-color: #5AF;
+  --ia-theme-border-color: #555;
+  --ia-theme-background-color: #111;
+  --ia-theme-text-color: white;
+}
+
 /* item details page */
 body.ia-module.tiles .item-ia .item-ttl .ttl,
 body.ia-module .ikind.stealth.in,
