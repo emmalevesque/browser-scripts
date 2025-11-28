@@ -1,14 +1,3 @@
-/* ==UserStyle==
-@name         Internet Archive dark theme
-@namespace    USO Archive
-@author       cirrow
-@description  Dark theme for the digital library of the Internet Archive.
-@version      20220318.23.50
-@license      CC0-1.0
-@preprocessor uso
-==/UserStyle== */
-@-moz-document domain('archive.org')  {
-
 body, main { background-color: #222; }
 html, body { color:white; }
 input, textarea, .form-control  { background-color: black; color: white; }
@@ -23,10 +12,6 @@ code  { background-color: #200; }
   --ia-theme-border-color: #555;
   --ia-theme-background-color: #111;
   --ia-theme-text-color: white;
-}
-
-#right-column, #page-header {
-  background-color: var(--ia-theme-secondary-background-color) !important;
 }
 
 /* item details page */
@@ -59,9 +44,9 @@ body.ia-module .boxy .boxy-ttl,
 body.ia-module #also-found { background-color: #111; }
 body.ia-module .search-bar-section { background-color:#444; border:unset; }
 body.ia-module.lists div.ikind .results {  border:unset; }
-#results {
-    background-color: #111;
-  }
+#page-header, .column, #results {
+  background-color: var(--ia-theme-secondary-background-color) !important;
+}
 body.ia-module.lists .item-ia,
 body.ia-module.lists.showdetails .details-ia { background-color: #444; }
 body.ia-module.lists.showdetails .details-ia { color: #eee; }
@@ -135,5 +120,3 @@ hr					{ border-top: 1px dashed white; }
 .home-page-hero-block-1 #whoweare.home-page-hero-block { color:white; }
 .hero-block-announcements-1 #announcements-container.hero-block-announcements ul.hero-block-announcements a.hero-block-announcements { color: #bbb }
 #main-image { filter:invert(1); }
-
-}
