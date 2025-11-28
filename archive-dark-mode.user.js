@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -390,6 +390,7 @@
 
     // Only apply programmatic overrides in dark mode
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        console.log('[Archive Dark Mode] Script active in dark mode');
 
         // Function to override inline styles
         function overrideInlineStyles(element) {
@@ -397,44 +398,62 @@
 
             const bgColor = element.style.backgroundColor;
             const bg = element.style.background;
+            const computedBg = window.getComputedStyle(element).backgroundColor;
 
-            // Check if element has white or light background
-            if (bgColor && (
-                bgColor.includes('255, 255, 255') ||
-                bgColor.includes('rgb(255,255,255)') ||
-                bgColor === 'white' ||
-                bgColor === '#fff' ||
-                bgColor === '#FFF' ||
-                bgColor === '#ffffff' ||
-                bgColor === '#FFFFFF'
-            )) {
-                // Determine appropriate dark color based on element
-                if (element.id && (element.id.includes('nav') || element.tagName === 'HEADER')) {
-                    element.style.setProperty('background-color', '#2d2d2d', 'important');
-                } else {
-                    element.style.setProperty('background-color', '#242424', 'important');
-                }
+            // Helper function to check if color is white
+            function isWhiteColor(color) {
+                if (!color) return false;
+                return color.includes('255, 255, 255') ||
+                       color.includes('rgb(255,255,255)') ||
+                       color === 'white' ||
+                       color === '#fff' ||
+                       color === '#FFF' ||
+                       color === '#ffffff' ||
+                       color === '#FFFFFF' ||
+                       color === 'rgb(255, 255, 255)';
             }
 
-            // Check background shorthand property
-            if (bg && (
-                bg.includes('255, 255, 255') ||
-                bg.includes('rgb(255,255,255)') ||
-                bg.includes('white') ||
-                bg.includes('#fff') ||
-                bg.includes('#FFF')
-            )) {
-                if (element.id && (element.id.includes('nav') || element.tagName === 'HEADER')) {
-                    element.style.setProperty('background', '#2d2d2d', 'important');
-                } else {
-                    element.style.setProperty('background', '#242424', 'important');
-                }
+            let needsOverride = false;
+            let targetColor = '#242424';
+
+            // Determine target color based on element
+            if (element.id && (element.id.includes('nav') || element.tagName === 'HEADER')) {
+                targetColor = '#2d2d2d';
+            }
+
+            // Check inline styles
+            if (isWhiteColor(bgColor) || isWhiteColor(bg)) {
+                needsOverride = true;
+            }
+
+            // Check computed styles for large elements
+            const rect = element.getBoundingClientRect();
+            if (rect.width > 100 && rect.height > 100 && isWhiteColor(computedBg)) {
+                needsOverride = true;
+            }
+
+            if (needsOverride) {
+                console.log('[Archive Dark Mode] Overriding white background on:', {
+                    element: element,
+                    tag: element.tagName,
+                    id: element.id,
+                    classes: element.className,
+                    inlineBgColor: bgColor,
+                    inlineBg: bg,
+                    computedBg: computedBg,
+                    size: `${Math.round(rect.width)}x${Math.round(rect.height)}`
+                });
+                element.style.setProperty('background-color', targetColor, 'important');
+                element.style.setProperty('background', targetColor, 'important');
             }
         }
 
         // Process all elements initially
         function processAllElements() {
-            document.querySelectorAll('*').forEach(overrideInlineStyles);
+            const elements = document.querySelectorAll('*');
+            console.log(`[Archive Dark Mode] Processing ${elements.length} elements...`);
+            elements.forEach(overrideInlineStyles);
+            console.log('[Archive Dark Mode] Processing complete');
         }
 
         // Run when DOM is ready
