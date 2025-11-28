@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -21,6 +21,15 @@
 
         /* Dark mode styles */
         @media (prefers-color-scheme: dark) {
+            /* Override Archive.org CSS custom properties */
+            :root, body {
+                --ia-theme-primary-background-color: #1a1a1a !important;
+                --ia-theme-secondary-background-color: #242424 !important;
+                --ia-theme-primary-text-color: #e0e0e0 !important;
+                --ia-theme-secondary-text-color: #b0b0b0 !important;
+                --ia-theme-link-color: #6db3f2 !important;
+            }
+
             /* Main background and text colors */
             body, html {
                 background-color: #1a1a1a !important;
@@ -306,13 +315,15 @@
                 color: #e0e0e0 !important;
             }
 
+            /* Right column on details pages */
+            #right-column {
+                background-color: #1a1a1a !important;
+            }
+
             /* Prevent bright white flashes */
             * {
                 background-color: inherit;
             }
-
-#right-column {
-    background-color: #1a1a1a !important;
         }
     `);
 })();
