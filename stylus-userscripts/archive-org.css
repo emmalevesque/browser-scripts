@@ -3,6 +3,10 @@ html, body { color:white; }
 input, textarea, .form-control  { background-color: black; color: white; }
 code  { background-color: #200; }
 
+* {
+  background-color: black, var(--ia-theme-secondary-background-color) !important;
+}
+
 :root {
   --ia-theme-secondary-background-color: #222;
   --ia-theme-primary-background-color: #222;
