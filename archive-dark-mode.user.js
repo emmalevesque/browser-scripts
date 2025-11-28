@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      2.0
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -387,4 +387,95 @@
             }
         }
     `);
+
+    // Only apply programmatic overrides in dark mode
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+
+        // Function to override inline styles
+        function overrideInlineStyles(element) {
+            if (!element.style) return;
+
+            const bgColor = element.style.backgroundColor;
+            const bg = element.style.background;
+
+            // Check if element has white or light background
+            if (bgColor && (
+                bgColor.includes('255, 255, 255') ||
+                bgColor.includes('rgb(255,255,255)') ||
+                bgColor === 'white' ||
+                bgColor === '#fff' ||
+                bgColor === '#FFF' ||
+                bgColor === '#ffffff' ||
+                bgColor === '#FFFFFF'
+            )) {
+                // Determine appropriate dark color based on element
+                if (element.id && (element.id.includes('nav') || element.tagName === 'HEADER')) {
+                    element.style.setProperty('background-color', '#2d2d2d', 'important');
+                } else {
+                    element.style.setProperty('background-color', '#242424', 'important');
+                }
+            }
+
+            // Check background shorthand property
+            if (bg && (
+                bg.includes('255, 255, 255') ||
+                bg.includes('rgb(255,255,255)') ||
+                bg.includes('white') ||
+                bg.includes('#fff') ||
+                bg.includes('#FFF')
+            )) {
+                if (element.id && (element.id.includes('nav') || element.tagName === 'HEADER')) {
+                    element.style.setProperty('background', '#2d2d2d', 'important');
+                } else {
+                    element.style.setProperty('background', '#242424', 'important');
+                }
+            }
+        }
+
+        // Process all elements initially
+        function processAllElements() {
+            document.querySelectorAll('*').forEach(overrideInlineStyles);
+        }
+
+        // Run when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', processAllElements);
+        } else {
+            processAllElements();
+        }
+
+        // Also run after a short delay to catch late-loading elements
+        setTimeout(processAllElements, 500);
+        setTimeout(processAllElements, 1000);
+        setTimeout(processAllElements, 2000);
+
+        // Watch for dynamically added elements
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) { // Element node
+                        overrideInlineStyles(node);
+                        if (node.querySelectorAll) {
+                            node.querySelectorAll('*').forEach(overrideInlineStyles);
+                        }
+                    }
+                });
+            });
+        });
+
+        // Start observing when DOM is ready
+        if (document.body) {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        } else {
+            document.addEventListener('DOMContentLoaded', () => {
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            });
+        }
+    }
 })();
