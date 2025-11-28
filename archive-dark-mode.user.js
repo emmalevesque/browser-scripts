@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Archive.org Dark Mode
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.3
 // @description  Adapts archive.org to dark mode based on system settings
 // @author       You
 // @match        https://archive.org/*
@@ -244,7 +244,9 @@
             }
 
             /* Carousel and media items */
-            .carousel, .item-tile, .results, .item {
+            /* Search results and item displays */
+            .carousel, .item-tile, .results, .item,
+            #results, #results-container, .results-container {
                 background-color: #242424 !important;
                 color: #e0e0e0 !important;
             }
@@ -421,14 +423,28 @@
                 targetColor = '#2d2d2d';
             }
 
+            // Specifically target #results and related containers
+            if (element.id === 'results' || element.id === 'results-container' ||
+                element.className.includes('results')) {
+                targetColor = '#242424';
+            }
+
             // Check inline styles
             if (isWhiteColor(bgColor) || isWhiteColor(bg)) {
                 needsOverride = true;
             }
 
-            // Check computed styles for large elements
+            // Check computed styles for ANY visible element
             const rect = element.getBoundingClientRect();
-            if (rect.width > 100 && rect.height > 100 && isWhiteColor(computedBg)) {
+            if (isWhiteColor(computedBg) && (rect.width > 0 || rect.height > 0)) {
+                needsOverride = true;
+            }
+
+            // Also check for rgba format
+            if (computedBg && (
+                computedBg.includes('rgba(255, 255, 255') ||
+                computedBg.includes('rgba(255,255,255')
+            )) {
                 needsOverride = true;
             }
 
@@ -449,10 +465,29 @@
         }
 
         // Process all elements initially
+        let debugCount = 0;
         function processAllElements() {
             const elements = document.querySelectorAll('*');
             console.log(`[Archive Dark Mode] Processing ${elements.length} elements...`);
-            elements.forEach(overrideInlineStyles);
+
+            // Debug: log first few elements with non-transparent backgrounds
+            elements.forEach(el => {
+                if (debugCount < 5) {
+                    const computed = window.getComputedStyle(el).backgroundColor;
+                    if (computed && computed !== 'rgba(0, 0, 0, 0)' && computed !== 'transparent') {
+                        console.log('[Archive Dark Mode] Sample element background:', {
+                            tag: el.tagName,
+                            id: el.id,
+                            class: el.className,
+                            computed: computed,
+                            inline: el.style.backgroundColor
+                        });
+                        debugCount++;
+                    }
+                }
+                overrideInlineStyles(el);
+            });
+
             console.log('[Archive Dark Mode] Processing complete');
         }
 
