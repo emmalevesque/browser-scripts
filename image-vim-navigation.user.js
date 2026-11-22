@@ -161,11 +161,15 @@
                 }
             });
 
-            // Strategy 2: Images in sibling paragraph or similar elements
+            // Strategy 2: Images in sibling paragraph or similar elements (including wrapped in links)
             const parentContainers = new Set();
             document.querySelectorAll('img').forEach(img => {
                 if (!capturedImages.has(img)) {
-                    const parent = img.parentElement;
+                    let parent = img.parentElement;
+                    // Traverse up to find the closest P, DIV, or FIGURE
+                    while (parent && !['P', 'DIV', 'FIGURE'].includes(parent.tagName)) {
+                        parent = parent.parentElement;
+                    }
                     if (parent && (parent.tagName === 'P' || parent.tagName === 'DIV' || parent.tagName === 'FIGURE')) {
                         parentContainers.add(parent);
                     }
