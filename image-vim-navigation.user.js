@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Image Vim Navigation
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Vim-like keyboard navigation (j,k,g,G) for image sets on a page
 // @author       You
 // @match        *://*/*
@@ -21,12 +21,13 @@
       this.settings = {
         smoothScroll: true,
       };
+      this.zoomedImage = null;
+      this.zoomLevel = 1;
 
       this.detectImageSets();
       this.setupKeyboardListeners();
       this.setupClickDetection();
       this.injectStyles();
-      this.showIndicator();
       this.setupSettingsToggle();
     }
 
@@ -39,6 +40,11 @@
           this.settings.smoothScroll = !this.settings.smoothScroll;
           const mode = this.settings.smoothScroll ? "smooth" : "instant";
           this.showStatus(`Scroll mode: ${mode}`);
+        }
+        // Press escape to un-zoom if zoomed
+        if (e.key === "Escape" && this.zoomedImage) {
+          e.preventDefault();
+          this.unzoomImage();
         }
       });
     }
@@ -159,7 +165,6 @@
           const imageIndex = detectedImages.indexOf(clickedImg);
 
           this.focusImageSet(setIndex, imageIndex);
-          this.showIndicator();
           this.showStatus(
             `Detected custom set with ${detectedImages.length} images`,
           );
@@ -283,7 +288,6 @@
 
       if (this.imageSets.length > 0) {
         this.initialized = true;
-        this.showIndicator();
         this.showStatus(
           `Found ${this.imageSets.length} image set(s). Use j/k to navigate, g to go first, G to go last.`,
         );
@@ -313,6 +317,12 @@
           case "G":
             e.preventDefault();
             this.lastImage();
+            break;
+          case ".":
+            if (e.altKey && e.shiftKey) {
+              e.preventDefault();
+              this.zoomToImage();
+            }
             break;
         }
       });
@@ -352,6 +362,59 @@
         const lastSetIndex = this.imageSets.length - 1;
         const lastImageIndex = this.imageSets[lastSetIndex].images.length - 1;
         this.focusImageSet(lastSetIndex, lastImageIndex);
+      }
+    }
+
+    zoomToImage() {
+      if (this.currentSetIndex === -1 || this.currentImageIndex === -1) {
+        this.showStatus("No image focused");
+        return;
+      }
+
+      const img = this.imageSets[this.currentSetIndex].images[
+        this.currentImageIndex
+      ];
+      const rect = img.getBoundingClientRect();
+
+      // Calculate zoom level based on image size and viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Get the ideal zoom to fit image with some padding
+      const padding = 50;
+      const maxWidth = viewportWidth - padding * 2;
+      const maxHeight = viewportHeight - padding * 2;
+
+      const widthRatio = maxWidth / rect.width;
+      const heightRatio = maxHeight / rect.height;
+
+      const zoomLevel = Math.min(widthRatio, heightRatio);
+
+      // Apply zoom via CSS transform on the image
+      img.style.transform = `scale(${zoomLevel})`;
+      img.style.transformOrigin = "center center";
+      img.style.position = "relative";
+      img.style.zIndex = "10001";
+
+      // Scroll to center
+      img.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      this.showStatus(`Zoomed to image (${Math.round(zoomLevel * 100)}%)`);
+
+      // Store zoom state for un-zoom
+      this.zoomedImage = img;
+      this.zoomLevel = zoomLevel;
+    }
+
+    unzoomImage() {
+      if (this.zoomedImage) {
+        this.zoomedImage.style.transform = "";
+        this.zoomedImage.style.transformOrigin = "";
+        this.zoomedImage.style.position = "";
+        this.zoomedImage.style.zIndex = "";
+        this.zoomedImage = null;
+        this.zoomLevel = 1;
+        this.showStatus("Zoom reset");
       }
     }
 
@@ -399,40 +462,6 @@
       }, 3000);
     }
 
-    showIndicator() {
-      let indicatorEl = document.getElementById("vim-nav-indicator");
-      if (!indicatorEl) {
-        indicatorEl = document.createElement("div");
-        indicatorEl.id = "vim-nav-indicator";
-        document.body.appendChild(indicatorEl);
-      }
-
-      if (this.initialized) {
-        // Show full indicator temporarily
-        indicatorEl.classList.add("vim-nav-indicator-expanded");
-        indicatorEl.innerHTML = `
-          <div class="vim-nav-indicator-content">
-            <div class="vim-nav-indicator-title">Image Navigation Active</div>
-            <div class="vim-nav-indicator-controls">
-              <span>j</span><span>k</span><span>g</span><span>G</span>
-            </div>
-            <div class="vim-nav-indicator-sets">${this.imageSets.length} set${this.imageSets.length !== 1 ? "s" : ""}</div>
-          </div>
-        `;
-
-        // Collapse to small indicator after delay
-        clearTimeout(this.indicatorTimeout);
-        this.indicatorTimeout = setTimeout(() => {
-          indicatorEl.classList.remove("vim-nav-indicator-expanded");
-          indicatorEl.innerHTML = `<div class="vim-nav-indicator-content vim-nav-indicator-collapsed">✓</div>`;
-        }, 2000);
-
-        indicatorEl.classList.add("vim-nav-indicator-visible");
-      } else {
-        indicatorEl.classList.remove("vim-nav-indicator-visible");
-      }
-    }
-
     injectStyles() {
       GM_addStyle(`
         img.vim-nav-focused {
@@ -459,75 +488,6 @@
 
         #vim-nav-status.vim-nav-visible {
           opacity: 1;
-        }
-
-        #vim-nav-indicator {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #333;
-          color: #fff;
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-family: monospace;
-          font-size: 12px;
-          z-index: 10000;
-          opacity: 0;
-          transition: opacity 0.2s, padding 0.3s, font-size 0.3s;
-          pointer-events: none;
-          display: none;
-          border: 1px solid #555;
-        }
-
-        #vim-nav-indicator.vim-nav-indicator-visible {
-          display: block;
-          opacity: 1;
-        }
-
-        #vim-nav-indicator.vim-nav-indicator-expanded {
-          padding: 12px 16px;
-          font-size: 12px;
-        }
-
-        .vim-nav-indicator-content.vim-nav-indicator-collapsed {
-          padding: 8px 12px;
-          font-size: 16px;
-          font-weight: bold;
-          text-align: center;
-          min-width: 24px;
-        }
-
-        .vim-nav-indicator-content {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          align-items: flex-end;
-        }
-
-        .vim-nav-indicator-title {
-          font-weight: bold;
-          font-size: 13px;
-        }
-
-        .vim-nav-indicator-controls {
-          display: flex;
-          gap: 6px;
-        }
-
-        .vim-nav-indicator-controls span {
-          background: rgba(255, 255, 255, 0.15);
-          padding: 2px 6px;
-          border-radius: 3px;
-          font-weight: bold;
-          min-width: 20px;
-          text-align: center;
-          font-size: 11px;
-        }
-
-        .vim-nav-indicator-sets {
-          font-size: 11px;
-          opacity: 0.9;
-          text-align: right;
         }
       `);
     }
