@@ -19,7 +19,7 @@
       this.currentImageIndex = -1;
       this.initialized = false;
       this.settings = {
-        smoothScroll: true,
+        smoothScroll: false,
       };
       this.zoomedImage = null;
       this.zoomLevel = 1;
