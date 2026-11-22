@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Image Vim Navigation
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Vim-like keyboard navigation (j,k,g,G) for image sets on a page
 // @author       You
 // @match        *://*/*
