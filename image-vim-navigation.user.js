@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Image Vim Navigation
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Vim-like keyboard navigation (j,k,g,G) for image sets on a page
 // @author       You
 // @match        *://*/*
@@ -18,12 +18,29 @@
       this.currentSetIndex = -1;
       this.currentImageIndex = -1;
       this.initialized = false;
+      this.settings = {
+        smoothScroll: true,
+      };
 
       this.detectImageSets();
       this.setupKeyboardListeners();
       this.setupClickDetection();
       this.injectStyles();
       this.showIndicator();
+      this.setupSettingsToggle();
+    }
+
+    setupSettingsToggle() {
+      document.addEventListener("keydown", (e) => {
+        if (!this.initialized) return;
+        // Press 'S' to toggle smooth scroll
+        if (e.key === "s" && e.shiftKey) {
+          e.preventDefault();
+          this.settings.smoothScroll = !this.settings.smoothScroll;
+          const mode = this.settings.smoothScroll ? "smooth" : "instant";
+          this.showStatus(`Scroll mode: ${mode}`);
+        }
+      });
     }
 
     setupClickDetection() {
@@ -144,13 +161,13 @@
           this.focusImageSet(setIndex, imageIndex);
           this.showIndicator();
           this.showStatus(
-            `✓ Detected custom set with ${detectedImages.length} images!`,
+            `Detected custom set with ${detectedImages.length} images`,
           );
           return;
         }
       }
 
-      this.showStatus("⚠ Could not detect image set from this image");
+      this.showStatus("Could not detect image set from this image");
     }
 
     detectImageSets() {
@@ -356,7 +373,9 @@
       this.currentImageIndex = imageIndex;
       const img = set.images[imageIndex];
       img.classList.add("vim-nav-focused");
-      img.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const behavior = this.settings.smoothScroll ? "smooth" : "instant";
+      img.scrollIntoView({ behavior: behavior, block: "center" });
 
       const totalInSet = set.images.length;
       this.showStatus(
@@ -389,15 +408,25 @@
       }
 
       if (this.initialized) {
+        // Show full indicator temporarily
+        indicatorEl.classList.add("vim-nav-indicator-expanded");
         indicatorEl.innerHTML = `
-                    <div class="vim-nav-indicator-content">
-                        <div class="vim-nav-indicator-title">🖼️ Vim Image Nav</div>
-                        <div class="vim-nav-indicator-controls">
-                            <span>j</span><span>k</span><span>g</span><span>G</span>
-                        </div>
-                        <div class="vim-nav-indicator-sets">${this.imageSets.length} set${this.imageSets.length !== 1 ? "s" : ""}</div>
-                    </div>
-                `;
+          <div class="vim-nav-indicator-content">
+            <div class="vim-nav-indicator-title">Image Navigation Active</div>
+            <div class="vim-nav-indicator-controls">
+              <span>j</span><span>k</span><span>g</span><span>G</span>
+            </div>
+            <div class="vim-nav-indicator-sets">${this.imageSets.length} set${this.imageSets.length !== 1 ? "s" : ""}</div>
+          </div>
+        `;
+
+        // Collapse to small indicator after delay
+        clearTimeout(this.indicatorTimeout);
+        this.indicatorTimeout = setTimeout(() => {
+          indicatorEl.classList.remove("vim-nav-indicator-expanded");
+          indicatorEl.innerHTML = `<div class="vim-nav-indicator-content vim-nav-indicator-collapsed">✓</div>`;
+        }, 2000);
+
         indicatorEl.classList.add("vim-nav-indicator-visible");
       } else {
         indicatorEl.classList.remove("vim-nav-indicator-visible");
@@ -406,86 +435,101 @@
 
     injectStyles() {
       GM_addStyle(`
-                img.vim-nav-focused {
-                    outline: 3px solid #ff6b6b !important;
-                    outline-offset: 2px !important;
-                    box-shadow: 0 0 10px rgba(255, 107, 107, 0.5) !important;
-                }
+        img.vim-nav-focused {
+          outline: 3px solid #ff6b6b !important;
+          outline-offset: 2px !important;
+          box-shadow: 0 0 10px rgba(255, 107, 107, 0.5) !important;
+        }
 
-                #vim-nav-status {
-                    position: fixed;
-                    bottom: 20px;
-                    left: 20px;
-                    background: rgba(0, 0, 0, 0.8);
-                    color: #fff;
-                    padding: 12px 16px;
-                    border-radius: 6px;
-                    font-family: monospace;
-                    font-size: 14px;
-                    z-index: 10000;
-                    opacity: 0;
-                    transition: opacity 0.2s;
-                    pointer-events: none;
-                }
+        #vim-nav-status {
+          position: fixed;
+          bottom: 20px;
+          left: 20px;
+          background: rgba(0, 0, 0, 0.8);
+          color: #fff;
+          padding: 12px 16px;
+          border-radius: 6px;
+          font-family: monospace;
+          font-size: 14px;
+          z-index: 10000;
+          opacity: 0;
+          transition: opacity 0.2s;
+          pointer-events: none;
+        }
 
-                #vim-nav-status.vim-nav-visible {
-                    opacity: 1;
-                }
+        #vim-nav-status.vim-nav-visible {
+          opacity: 1;
+        }
 
-                #vim-nav-indicator {
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: #fff;
-                    padding: 12px 16px;
-                    border-radius: 8px;
-                    font-family: monospace;
-                    font-size: 12px;
-                    z-index: 10000;
-                    opacity: 0;
-                    transition: opacity 0.2s;
-                    pointer-events: none;
-                    display: none;
-                }
+        #vim-nav-indicator {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #333;
+          color: #fff;
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-family: monospace;
+          font-size: 12px;
+          z-index: 10000;
+          opacity: 0;
+          transition: opacity 0.2s, padding 0.3s, font-size 0.3s;
+          pointer-events: none;
+          display: none;
+          border: 1px solid #555;
+        }
 
-                #vim-nav-indicator.vim-nav-indicator-visible {
-                    display: block;
-                    opacity: 1;
-                }
+        #vim-nav-indicator.vim-nav-indicator-visible {
+          display: block;
+          opacity: 1;
+        }
 
-                .vim-nav-indicator-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                    align-items: flex-end;
-                }
+        #vim-nav-indicator.vim-nav-indicator-expanded {
+          padding: 12px 16px;
+          font-size: 12px;
+        }
 
-                .vim-nav-indicator-title {
-                    font-weight: bold;
-                    font-size: 13px;
-                }
+        .vim-nav-indicator-content.vim-nav-indicator-collapsed {
+          padding: 8px 12px;
+          font-size: 16px;
+          font-weight: bold;
+          text-align: center;
+          min-width: 24px;
+        }
 
-                .vim-nav-indicator-controls {
-                    display: flex;
-                    gap: 6px;
-                }
+        .vim-nav-indicator-content {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: flex-end;
+        }
 
-                .vim-nav-indicator-controls span {
-                    background: rgba(255, 255, 255, 0.2);
-                    padding: 2px 6px;
-                    border-radius: 3px;
-                    font-weight: bold;
-                    min-width: 20px;
-                    text-align: center;
-                }
+        .vim-nav-indicator-title {
+          font-weight: bold;
+          font-size: 13px;
+        }
 
-                .vim-nav-indicator-sets {
-                    font-size: 11px;
-                    opacity: 0.9;
-                    text-align: right;
-                }
-            `);
+        .vim-nav-indicator-controls {
+          display: flex;
+          gap: 6px;
+        }
+
+        .vim-nav-indicator-controls span {
+          background: rgba(255, 255, 255, 0.15);
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-weight: bold;
+          min-width: 20px;
+          text-align: center;
+          font-size: 11px;
+        }
+
+        .vim-nav-indicator-sets {
+          font-size: 11px;
+          opacity: 0.9;
+          text-align: right;
+        }
+      `);
     }
   }
 
